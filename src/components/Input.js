@@ -14,7 +14,7 @@ const Input = (props) =>{
             <form className="ui form" onSubmit={onSubmit}>
                 <div className="field">
                     <label>No of Words</label>
-                    <input type={`number`} value ={numWords} onChange={(e) => setNumWords(e.target.value)} min={1} max={6}></input>
+                    <input type={`number`} value ={numWords} onChange={(e) => setNumWords(e.target.value)} min={1} max={10}></input>
                     <span className="validity"></span>
                 </div>
             </form>
