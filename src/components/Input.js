@@ -6,6 +6,7 @@ const Input = (props) =>{
 
     const onSubmit =(event)=>{
         event.preventDefault();
+        props.spinnerHandler();
         props.handleSubmit(numWords);
     }
 
