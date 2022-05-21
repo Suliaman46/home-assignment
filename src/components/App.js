@@ -14,22 +14,27 @@ const App = ()=>{
 
         const promises =[]
         for(let i =0; i< num; i++) {
-            promises.push(randomWordsAPI.get(`/word?${new Date().getTime()}`))
+            promises.push(randomWordsAPI.get(`/word?${new Date().getTime()}${Math.random()}`))
+            // promises.push(randomWordsAPI.get(`/word?${new Date().getTime()}`))
         }
         Promise.all(promises).then((responses) =>{
 
-            const fetchedWordsList = responses.map(response =>{
-                return (response.data[0].word)
-            })
-            const uniqueFetchedWordsList = new Set(fetchedWordsList)
-            const diff = fetchedWordsList.length - uniqueFetchedWordsList.size
+            const reducedFetchedWordsList = responses.reduce((result, response) =>{
+                if(typeof(response.data) == 'object'){
+                    return result.concat(response.data[0].word)
+                }
+                return result
+            },[])
 
-            if( diff > 0) {
+            const uniqueFetchedWordsList = new Set(reducedFetchedWordsList)
+            const diff = reducedFetchedWordsList.length - uniqueFetchedWordsList.size
+
+            if( diff > 0 || reducedFetchedWordsList.length < num) {
                 handleDuplicates(uniqueFetchedWordsList, num)
             }
-            else if (diff === 0 ){
+            else {
                 setShowSpinner(false);
-                setWords(fetchedWordsList)
+                setWords(reducedFetchedWordsList.sort())
             }
         })
 
@@ -78,14 +83,14 @@ const App = ()=>{
 
     const toReturn = [...uniqueWordsList]
     while(toReturn.length < target) {
-        let response = await randomWordsAPI.get(`/word?${new Date().getTime()}`);
+        let response = await randomWordsAPI.get(`/word`);
         if(!toReturn.includes(response.data[0].word)){
             toReturn.push(response.data[0].word)
         }
         else continue;
     }
     setShowSpinner(false);
-    setWords(toReturn)
+    setWords(toReturn.sort())
     }
 
 
@@ -95,7 +100,6 @@ const App = ()=>{
             <div className="ui medium header">Fetched Random Words:</div>
                {showSpinner ? <Spinner/> : <WordsList words={words}/>}
                 { recordings.length > 0 && !showSpinner && <FinalTable records={recordings}/>}
-                
         </div>
     );
 }
