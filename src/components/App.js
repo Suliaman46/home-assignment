@@ -10,21 +10,27 @@ const App = ()=>{
     const [words, setWords] = useState([])
     const [recordings, setRecordings] = useState([])
     const [showSpinner, setShowSpinner] = useState(false);
-
     const fetchWords = async (num) =>{
+
         const promises =[]
         for(let i =0; i< num; i++) {
-            promises.push(randomWordsAPI.get('/word',{params: {
-                t: new Date().getTime()
-            }}))
+            promises.push(randomWordsAPI.get(`/word?${new Date().getTime()}`))
         }
         Promise.all(promises).then((responses) =>{
 
-            const toAdd = responses.map(response =>{
+            const fetchedWordsList = responses.map(response =>{
                 return (response.data[0].word)
             })
-            setShowSpinner(false);
-            setWords(toAdd)
+            const uniqueFetchedWordsList = new Set(fetchedWordsList)
+            const diff = fetchedWordsList.length - uniqueFetchedWordsList.size
+
+            if( diff > 0) {
+                handleDuplicates(uniqueFetchedWordsList, num)
+            }
+            else if (diff === 0 ){
+                setShowSpinner(false);
+                setWords(fetchedWordsList)
+            }
         })
 
     }
@@ -67,6 +73,21 @@ const App = ()=>{
     const showSpinnerHandler = () => {
         setShowSpinner(true);
       };
+
+    const handleDuplicates = async (uniqueWordsList,target) =>{
+
+    const toReturn = [...uniqueWordsList]
+    while(toReturn.length < target) {
+        let response = await randomWordsAPI.get(`/word?${new Date().getTime()}`);
+        if(!toReturn.includes(response.data[0].word)){
+            toReturn.push(response.data[0].word)
+        }
+        else continue;
+    }
+    setShowSpinner(false);
+    setWords(toReturn)
+    }
+
 
     return (
         <div className="ui container">
