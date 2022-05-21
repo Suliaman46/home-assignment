@@ -14,15 +14,11 @@ const App = ()=>{
     const fetchWords = async (num) =>{
         const promises =[]
         for(let i =0; i< num; i++) {
-            promises.push(randomWordsAPI.get('word'))
-            // responses.push(response.data[0].word);
+            promises.push(randomWordsAPI.get('/word',{params: {
+                t: new Date().getTime()
+            }}))
         }
         Promise.all(promises).then((responses) =>{
-
-            // const toAdd = responses.map((response) =>{
-            //     response.data[0].word
-            // })
-            // setWords(toAdd)
 
             const toAdd = responses.map(response =>{
                 return (response.data[0].word)
