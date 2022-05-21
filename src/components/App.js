@@ -4,12 +4,12 @@ import Input from "./Input";
 import musicBrainz from "../apis/musicBrainz";
 import FinalTable from "./FinalTable";
 import Spinner from "./Spinner";
+import WordsList from "./WordsList";
 
 const App = ()=>{
     const [words, setWords] = useState([])
     const [recordings, setRecordings] = useState([])
     const [showSpinner, setShowSpinner] = useState(false);
-    console.log(showSpinner)
 
     const fetchWords = async (num) =>{
         const promises =[]
@@ -29,25 +29,6 @@ const App = ()=>{
 
     }
 
-
-    const handleSubmit = (numWords) =>{
-        fetchWords(numWords)
-    }
-
-    const renderedWords = words.map((word) =>{
-        return (
-            <div className="col-md-auto" key={word}>
-                <div className="ui segment" >
-                    {word}
-                </div>
-            </div>
-        );
-    })
-
-    const showSpinnerHandler = () => {
-        setShowSpinner(true);
-      };
-
     useEffect(()=> {
 
         const fetchRecordings = async () =>{
@@ -65,7 +46,6 @@ const App = ()=>{
                 const toAdd = responses.map(response =>{
                     
                     const {data : {recordings}} = response
-                    console.log(recordings);
                     return (recordings.length > 0 ? {'title': recordings[0].title, 'artist': recordings[0]["artist-credit"][0].artist.name, 'album':recordings[0].releases[0]["release-group"].title, 'id':recordings[0].id} : 'No recording found')
                 })
                 const recodingsWithWords = toAdd.map((e,i) =>{
@@ -80,13 +60,19 @@ const App = ()=>{
         }
     },[words]);
 
+    const handleSubmit = (numWords) =>{
+        fetchWords(numWords)
+    }
+
+    const showSpinnerHandler = () => {
+        setShowSpinner(true);
+      };
+
     return (
         <div className="ui container">
             <Input handleSubmit={handleSubmit} spinnerHandler={showSpinnerHandler}/>
             <div className="ui medium header">Fetched Random Words:</div>
-               {showSpinner ? <Spinner/> :<div className="ui equal width grid" style={{ padding: '10px'}}>
-                    {renderedWords}
-                </div>}
+               {showSpinner ? <Spinner/> : <WordsList words={words}/>}
                 { recordings.length > 0 && !showSpinner && <FinalTable records={recordings}/>}
                 
         </div>
