@@ -2,29 +2,17 @@ import React from "react";
 
 const FinalTable =({records})=>{
     const renderedTableContent = records.map((entry) =>{
-
-        if(typeof(entry.recording) === 'string') {
+ 
             return (
-                <tr >
+                <tr key={entry.id}>
                     <td>{entry.word}</td>
-                    <td>{entry.recording}</td>
-                    <td></td>
-                    <td></td>
-                </tr>
-            )
-
-        }
-        else {
-            return (
-                <tr key={entry.recording.id}>
-                    <td>{entry.word}</td>
-                    <td>{entry.recording.title}</td>
-                    <td>{entry.recording.artist}</td>
-                    <td>{entry.recording.album}</td>
+                    <td>{entry.title}</td>
+                    <td>{entry.artist}</td>
+                    <td>{entry.album}</td>
                 </tr>
 
             )
-        }
+        
     })
 
 
