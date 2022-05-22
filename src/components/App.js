@@ -6,6 +6,23 @@ import FinalTable from "./FinalTable";
 import Spinner from "./Spinner";
 import WordsList from "./WordsList";
 
+
+const getUniqueRecordingList = (argArray, index, result, visited)=> {
+    if (index === argArray.length) return true;
+    for (let item of argArray[index]) {
+        if (!visited.has(item)) {
+            result.push(item)
+            visited.add(item)
+            if(getUniqueRecordingList(argArray, index +1, result, visited)){
+                return true
+            }
+            result.pop()
+            visited.delete(item)
+        }
+    }
+    return false;
+}
+
 const App = ()=>{
     const [words, setWords] = useState([])
     const [recordings, setRecordings] = useState([])
@@ -46,36 +63,50 @@ const App = ()=>{
 
         const fetchRecordings = async () =>{
 
-            Promise.allSettled(words.map( async (word) =>{
-                 try {
-                     return await musicBrainz.get('/recording',{
+            const responses = []
+            await words.reduce(async (promise, word) =>{
+                await promise;
+                    const response = await musicBrainz.get('/recording',{
                         params : {
                             query: word,
-                            limit: '1',
+                            limit: '3',
                             fmt:'json'
                         }
-                    })
-                 } catch (err) {
-                     if(!showWarning) setShowWarning(true); 
-                     throw new Error(`Recording for ${word} threw error: ${err.message}`);
-                 }
-            })).then((results)=>{
-                const toAdd = []
-                console.log(results)
-                results.forEach(result => {
-                    if(result.status === 'fulfilled'){
-                        const {data: {recordings}} = result.value;
-                        toAdd.push(recordings.length > 0 ? {'title': recordings[0].title, 'artist': recordings[0]["artist-credit"][0].artist.name, 'album':recordings[0].releases[0]["release-group"].title, 'id':recordings[0].id} : 'No recording found') 
-                    }
-                });
+                    }).catch(error => console.log(error));
+                    responses.push(response.data.recordings)
+            },Promise.resolve())
 
-                const recodingsWithWords = toAdd.map((e,i) =>{
-                    return {'recording': e,'word': words[i]};
-                })
-                if(results.every(result=> result.status === 'fulfilled')) setShowWarning(false);
-                setRecordings(recodingsWithWords)
+            //LOGIC FOR VALIDATING UNIQUENESS //
+
+            const recordingsWithWords = responses.map((e,i) =>{
+            return {'recordings': e,'word': words[i]};
             })
             
+            const recordingsForNonEmptyWords = recordingsWithWords.filter((e)=>e.recordings.length>0)
+            const recordingsForEmptyWords =  recordingsWithWords.filter((e)=>e.recordings.length === 0)
+
+            const recordingsRelevantInfoForEmptyWords = recordingsForEmptyWords.map(e=>{
+                return {word: e.word, title: 'No Recording Found', id: e.word}
+            })
+            const recordingsRelevantInfoForNonEmptyWords = recordingsForNonEmptyWords.map(e=>{
+                return e.recordings.map((recording)=>{
+                    return  {word: e.word,title: recording.title,id: recording.id, artist: recording['artist-credit'][0].artist.name, album: recording.releases[0]['release-group'].title}
+                })
+            })
+
+            let result = []
+            console.log(getUniqueRecordingList(recordingsRelevantInfoForNonEmptyWords, 0, result, new Set()))
+
+            const finalRecordingsList = result.concat(recordingsRelevantInfoForEmptyWords)
+            
+            finalRecordingsList.sort((a,b)=> {
+                if(a.word < b.word ) return -1
+                if(a.word > b.word) return 1
+                return 0
+            })
+            setRecordings(finalRecordingsList)
+
+        
         }
         if(words.length > 0){
             fetchRecordings();
@@ -111,7 +142,7 @@ const App = ()=>{
             <div className="ui medium header">Fetched Random Words:</div>
                {showSpinner ? <Spinner/> : <WordsList words={words}/>}
                 { recordings.length > 0 && !showSpinner && <FinalTable records={recordings}/>}
-                {showWarning && (<div className="ui warning message">Not all recordings could be loaded. Please try again after a short delay </div>)}
+                {/* {showWarning && (<div className="ui warning message">Not all recordings could be loaded. Please try again after a short delay </div>)} */}
         </div>
     );
 }
