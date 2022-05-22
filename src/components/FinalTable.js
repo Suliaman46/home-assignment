@@ -2,9 +2,8 @@ import React from "react";
 
 const FinalTable =({records})=>{
     const renderedTableContent = records.map((entry) =>{
- 
             return (
-                <tr key={entry.id}>
+                <tr key={entry.id} className={entry.artist ? ``:`warning`}>
                     <td>{entry.word}</td>
                     <td>{entry.title}</td>
                     <td>{entry.artist}</td>
@@ -12,20 +11,19 @@ const FinalTable =({records})=>{
                 </tr>
 
             )
-        
+            
     })
-
 
     return(
         <table className="ui celled table" >
-            <tbody id="section1" style={{textAlign: "center"}}>
+            <thead  style={{textAlign: "center"}}>
                 <tr>
                     <th>Word</th>
                     <th>Title</th>
                     <th>Artist</th>
                     <th>Album</th>
                 </tr>
-            </tbody>
+            </thead>
             <tbody id="section2" style={{textAlign: "center"}}>
                 {renderedTableContent}
             </tbody>

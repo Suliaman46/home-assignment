@@ -3,14 +3,11 @@ import React, { useState } from "react";
 
 const Input = (props) =>{
     const [numWords, setNumWords] = useState(1);
-    const [buttonDisabled, setButtonDisabled] = useState(false)
 
     const onSubmit =(event)=>{
         event.preventDefault();        
         props.spinnerHandler();
         props.handleSubmit(numWords);
-        // setButtonDisabled(true);
-        // setTimeout(( ) => setButtonDisabled(false), 1000);
     }
 
     return (
@@ -21,7 +18,7 @@ const Input = (props) =>{
                     <input type={`number`} value ={numWords} onChange={(e) => setNumWords(e.target.value)} min={1} max={15}></input>
                     <span className="validity"></span>
                 </div>
-                <button className="ui secondary button" type="submit"  disabled={buttonDisabled}>Go</button>
+                <button className="ui secondary button" type="submit" >Go</button>
             </form>
         </div>
     );

@@ -34,7 +34,6 @@ const App = ()=>{
         const promises =[]
         for(let i =0; i< num; i++) {
             promises.push(randomWordsAPI.get(`/word?${new Date().getTime()}${Math.random()}`))
-            // promises.push(randomWordsAPI.get(`/word?${new Date().getTime()}`))
         }
         Promise.all(promises).then((responses) =>{
 
@@ -72,7 +71,11 @@ const App = ()=>{
                             limit: '3',
                             fmt:'json'
                         }
-                    }).catch(error => console.log(error));
+                    }).catch(error => {
+                        
+                        setShowWarning(true);
+                        throw new Error(`Recording for ${word} threw error: ${error.message}`);
+                    });
                     responses.push(response.data.recordings)
             },Promise.resolve())
 
@@ -81,23 +84,19 @@ const App = ()=>{
             const recordingsWithWords = responses.map((e,i) =>{
             return {'recordings': e,'word': words[i]};
             })
-            
-            const recordingsForNonEmptyWords = recordingsWithWords.filter((e)=>e.recordings.length>0)
-            const recordingsForEmptyWords =  recordingsWithWords.filter((e)=>e.recordings.length === 0)
 
-            const recordingsRelevantInfoForEmptyWords = recordingsForEmptyWords.map(e=>{
-                return {word: e.word, title: 'No Recording Found', id: e.word}
+            const recordingsInfoForEmptyWords =  recordingsWithWords.filter((e)=>e.recordings.length === 0).map(e=>{
+                return {word: e.word, title: 'No Recording Found!', id: e.word}
             })
-            const recordingsRelevantInfoForNonEmptyWords = recordingsForNonEmptyWords.map(e=>{
+            const recordingsInfoForNonEmptyWords = recordingsWithWords.filter((e)=>e.recordings.length>0).map(e=>{
                 return e.recordings.map((recording)=>{
                     return  {word: e.word,title: recording.title,id: recording.id, artist: recording['artist-credit'][0].artist.name, album: recording.releases[0]['release-group'].title}
                 })
             })
 
-            let result = []
-            console.log(getUniqueRecordingList(recordingsRelevantInfoForNonEmptyWords, 0, result, new Set()))
-
-            const finalRecordingsList = result.concat(recordingsRelevantInfoForEmptyWords)
+            let uniqueRecordingList = []
+            console.log(getUniqueRecordingList(recordingsInfoForNonEmptyWords, 0, uniqueRecordingList, new Set()))
+            const finalRecordingsList = uniqueRecordingList.concat(recordingsInfoForEmptyWords)
             
             finalRecordingsList.sort((a,b)=> {
                 if(a.word < b.word ) return -1
@@ -105,7 +104,6 @@ const App = ()=>{
                 return 0
             })
             setRecordings(finalRecordingsList)
-
         
         }
         if(words.length > 0){
@@ -114,11 +112,13 @@ const App = ()=>{
     },[words]);
 
     const handleSubmit = (numWords) =>{
+        setRecordings([]) // The on resubmit the old table was showing up for a split second before a rerender
         fetchWords(numWords)
     }
 
     const showSpinnerHandler = () => {
         setShowSpinner(true);
+        setShowWarning(false)
       };
 
     const handleDuplicates = async (uniqueWordsList,target) =>{
@@ -137,12 +137,12 @@ const App = ()=>{
 
 
     return (
-        <div className="ui container">
+        <div className="ui container" style={{marginTop:'5px'}}>
             <Input handleSubmit={handleSubmit} spinnerHandler={showSpinnerHandler}/>
             <div className="ui medium header">Fetched Random Words:</div>
-               {showSpinner ? <Spinner/> : <WordsList words={words}/>}
-                { recordings.length > 0 && !showSpinner && <FinalTable records={recordings}/>}
-                {/* {showWarning && (<div className="ui warning message">Not all recordings could be loaded. Please try again after a short delay </div>)} */}
+                {showSpinner ? <Spinner/> : <WordsList words={words}/>}
+                {recordings.length > 0 && !showSpinner && <FinalTable records={recordings}/>}
+                {showWarning && (<div className="ui warning message">Not all recordings could be loaded. Please wait a bit before you try again </div>)}
         </div>
     );
 }
