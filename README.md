@@ -1,6 +1,7 @@
-# Fetching recording details from Random words
-
-## Installation
+# Recording from random words
+Fetches unique random words from the `https://random-words-api.vercel.app/word` API, and uses them to fetch recordings with the given words in their titles' using MusicBrainz API 
+![](https://imgur.com/a/JkLe75Y)
+## Installation (Running)
 
 ```sh
 # Clone the Repo
@@ -15,3 +16,6 @@ npm install
 # Start the Development Server
 npm start
 ```
+## Required
+* Node
+* npm

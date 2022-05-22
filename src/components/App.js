@@ -1,27 +1,13 @@
 import React, { useEffect, useState } from "react";
+
 import randomWordsAPI from "../apis/randomWordsAPI";
 import Input from "./Input";
 import musicBrainz from "../apis/musicBrainz";
 import FinalTable from "./FinalTable";
 import Spinner from "./Spinner";
 import WordsList from "./WordsList";
+import getUniqueRecordingList from "../helpers/uniqueValidation";
 
-
-const getUniqueRecordingList = (argArray, index, result, visited)=> {
-    if (index === argArray.length) return true;
-    for (let item of argArray[index]) {
-        if (!visited.has(item)) {
-            result.push(item)
-            visited.add(item)
-            if(getUniqueRecordingList(argArray, index +1, result, visited)){
-                return true
-            }
-            result.pop()
-            visited.delete(item)
-        }
-    }
-    return false;
-}
 
 const App = ()=>{
     const [words, setWords] = useState([])
@@ -29,12 +15,17 @@ const App = ()=>{
     const [showSpinner, setShowSpinner] = useState(false);
     const [showWarning, setShowWarning] = useState(false)
 
-    const fetchWords = async (num) =>{
+    const handleSubmit = (numWords) =>{
+        if(recordings.length>0) setRecordings([]) //  On resubmit the old table was showing up for a split second before a rerender
+        fetchWords(numWords)
+    }
 
+    const fetchWords = async (num) =>{
         const promises =[]
         for(let i =0; i< num; i++) {
             promises.push(randomWordsAPI.get(`/word?${new Date().getTime()}${Math.random()}`))
         }
+
         Promise.all(promises).then((responses) =>{
 
             const reducedFetchedWordsList = responses.reduce((result, response) =>{
@@ -54,8 +45,22 @@ const App = ()=>{
                 setShowSpinner(false);
                 setWords(reducedFetchedWordsList.sort())
             }
+        }).catch((error) =>{
+            throw new Error(`Random word API threw error: ${error.message}`);
         })
+    }
 
+    const handleDuplicates = async (uniqueWordsList,target) =>{
+        const toReturn = [...uniqueWordsList]
+        while(toReturn.length < target) {
+            let response = await randomWordsAPI.get(`/word`);
+            if(!toReturn.includes(response.data[0].word)){
+                toReturn.push(response.data[0].word)
+            }
+            else continue;
+        }
+        setShowSpinner(false);
+        setWords(toReturn.sort())
     }
 
     useEffect(()=> {
@@ -95,7 +100,7 @@ const App = ()=>{
             })
 
             let uniqueRecordingList = []
-            console.log(getUniqueRecordingList(recordingsInfoForNonEmptyWords, 0, uniqueRecordingList, new Set()))
+            getUniqueRecordingList(recordingsInfoForNonEmptyWords, 0, uniqueRecordingList, new Set())
             const finalRecordingsList = uniqueRecordingList.concat(recordingsInfoForEmptyWords)
             
             finalRecordingsList.sort((a,b)=> {
@@ -104,44 +109,28 @@ const App = ()=>{
                 return 0
             })
             setRecordings(finalRecordingsList)
-        
         }
         if(words.length > 0){
             fetchRecordings();
         }
     },[words]);
 
-    const handleSubmit = (numWords) =>{
-        setRecordings([]) // The on resubmit the old table was showing up for a split second before a rerender
-        fetchWords(numWords)
-    }
-
     const showSpinnerHandler = () => {
         setShowSpinner(true);
         setShowWarning(false)
       };
 
-    const handleDuplicates = async (uniqueWordsList,target) =>{
-
-    const toReturn = [...uniqueWordsList]
-    while(toReturn.length < target) {
-        let response = await randomWordsAPI.get(`/word`);
-        if(!toReturn.includes(response.data[0].word)){
-            toReturn.push(response.data[0].word)
-        }
-        else continue;
-    }
-    setShowSpinner(false);
-    setWords(toReturn.sort())
-    }
-
-
     return (
         <div className="ui container" style={{marginTop:'5px'}}>
             <Input handleSubmit={handleSubmit} spinnerHandler={showSpinnerHandler}/>
             <div className="ui medium header">Fetched Random Words:</div>
-                {showSpinner ? <Spinner/> : <WordsList words={words}/>}
-                {recordings.length > 0 && !showSpinner && <FinalTable records={recordings}/>}
+                {showSpinner ? <Spinner/> : 
+                    <div> 
+                        <WordsList words={words}/>
+                        {recordings.length > 0 && <FinalTable records={recordings}/>}
+                    
+                    </div>
+                }
                 {showWarning && (<div className="ui warning message">Not all recordings could be loaded. Please wait a bit before you try again </div>)}
         </div>
     );
