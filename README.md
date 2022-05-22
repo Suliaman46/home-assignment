@@ -1,6 +1,6 @@
 # Recording from random words
 Fetches unique random words from the `https://random-words-api.vercel.app/word` API, and uses them to fetch recordings with the given words in their titles' using MusicBrainz API 
-![](https://imgur.com/a/JkLe75Y)
+[Imgur](https://imgur.com/d1lxqGd)
 ## Installation (Running)
 
 ```sh
