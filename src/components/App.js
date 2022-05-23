@@ -13,7 +13,7 @@ const App = ()=>{
     const [words, setWords] = useState([])
     const [recordings, setRecordings] = useState([])
     const [showSpinner, setShowSpinner] = useState(false);
-    const [showWarning, setShowWarning] = useState(false)
+    const [showWarning, setShowWarning] = useState('')
 
     const handleSubmit = (numWords) =>{
         if(recordings.length>0) setRecordings([]) //  On resubmit the old table was showing up for a split second before a rerender
@@ -78,7 +78,7 @@ const App = ()=>{
                         }
                     }).catch(error => {
                         
-                        setShowWarning(true);
+                        setShowWarning('Not all recordings could be loaded. Please wait a bit before you try again.');
                         throw new Error(`Recording for ${word} threw error: ${error.message}`);
                     });
                     responses.push(response.data.recordings)
@@ -100,7 +100,11 @@ const App = ()=>{
             })
 
             let uniqueRecordingList = []
-            getUniqueRecordingList(recordingsInfoForNonEmptyWords, 0, uniqueRecordingList, new Set())
+            if(getUniqueRecordingList(recordingsInfoForNonEmptyWords, 0, uniqueRecordingList, new Set()) === false){
+                //Not possible to create a unique selection from record list // Highly Improbable case
+                setShowWarning('Could not uniquely select recordings. Please try again!')
+                
+            } 
             const finalRecordingsList = uniqueRecordingList.concat(recordingsInfoForEmptyWords)
             
             finalRecordingsList.sort((a,b)=> {
@@ -117,7 +121,7 @@ const App = ()=>{
 
     const showSpinnerHandler = () => {
         setShowSpinner(true);
-        setShowWarning(false)
+        setShowWarning('')
       };
 
     return (
@@ -131,7 +135,7 @@ const App = ()=>{
                     
                     </div>
                 }
-                {showWarning && (<div className="ui warning message">Not all recordings could be loaded. Please wait a bit before you try again </div>)}
+                {showWarning && (<div className="ui warning message">{showWarning}</div>)}
         </div>
     );
 }
